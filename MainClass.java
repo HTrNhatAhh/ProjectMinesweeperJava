@@ -11,12 +11,12 @@ import javax.swing.JOptionPane;
 public class MainClass {
     public static void main(String args[]) {
         JFrame f = new JFrame("JColorChooser Sample");
-        f.setDefaultCloseOperation("JFram.EXT_ON_CLOSE");
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         final JButton button = new JButton("Pick to Change Background");
 
         ActionListener actionListener = new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
-                Color initialBackgroud = button.getBackground();
+                Color initialBackground = button.getBackground();
                 Color background = JColorChooser.showDialog(null, "JColerChooser Sample", initialBackground);
                 if (background != null) {
                     button.setBackground(background);
