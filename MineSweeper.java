@@ -93,7 +93,6 @@ public class MineSweeper extends JPanel implements AWTEventListener, ActionListe
         pnl.add(btnReset);
         JPanel pnlN = new JPanel(new GridLayout(1, 3));
 
-        pnlN.add(lblBombCount);
         pnlN.add(pnl);
         pnlN.add(pnlTimer);
         add(pnlN, BorderLayout.NORTH);
@@ -134,7 +133,7 @@ public class MineSweeper extends JPanel implements AWTEventListener, ActionListe
         Random r = new Random();
         for (Component c : components) {
             Point location = ((GameButton) c).getPosition();
-            int currrentPosition = new Double(((location.x) * COLUMNS) + location.getY()).intValue();
+            int currrentPosition = location.x * COLUMNS + location.y;
             int bombLocation = r.nextInt(TOTAL);
             if (bombLocation == currrentPosition) {
                 ((GameButton) c).setBomb(true);
