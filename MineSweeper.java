@@ -196,4 +196,241 @@ public class MineSweeper extends JPanel implements AWTEventListener, ActionListe
         });
         return btn;
     }
+    private boolean checkGameState() {
+    boolean isWin = false;
+    for (Component c : pnlMain.getComponents()) {
+      GameButton b = (GameButton) c;
+      if (b.getState() != State.Clicked) {
+        if (b.isBomb()) {
+          isWin = true;
+        } else {
+          return false;
+        }
+      }
+    }
+    if (isWin) {
+      state = GameState.Finished;
+      for (Component c : pnlMain.getComponents()) {
+        GameButton b = (GameButton) c;
+        if (b.isBomb()) {
+          b.setState(State.Marked);
+        }
+        b.setEnabled(false);
+      }
+
+  private void updateSurroundingZeros(Point currentPoint) {
+    Point[] points = getSurroundings(currentPoint);
+
+    for (Point p : points) {
+      GameButton b = getButtonAt(pnlMain.getComponents(), p);
+      if (b != null && b.getBombCount() == 0 && b.getState() != State.Clicked && b.getState() != State.Marked && b.isBomb() == false) {
+        b.setState(State.Clicked);
+        updateSurroundingZeros(b.getPosition());
+        b.updateUI();
+      }
+      if (b != null && b.getBombCount() > 0 && b.getState() != State.Clicked && b.getState() != State.Marked && b.isBomb() == false) {
+        b.setEnabled(false);
+        b.setState(State.Clicked);
+        b.updateUI();
+      }
+    }
+  }
+
+  private void blastBombs() {
+    int blastCount = 0;
+    for (Component c : pnlMain.getComponents()) {
+      ((GameButton) c).setEnabled(false);
+      ((GameButton) c).transferFocus();
+      if (((GameButton) c).isBomb() && ((GameButton) c).getState() != State.Marked) {
+        ((GameButton) c).setState(State.Clicked);
+        ((GameButton) c).updateUI();
+        blastCount++;
+      }
+      if (((GameButton) c).isBomb() == false && ((GameButton) c).getState() == State.Marked) {
+        ((GameButton) c).setState(State.WrongMarked);
+      }
+    }
+    lblBombCount.setText("" + blastCount);
+    lblBombCount.updateUI();
+    state = GameState.Finished;
+    JOptionPane.showMessageDialog(this, "You loose the game :(", "Game Over", JOptionPane.ERROR_MESSAGE, null);
+    for (Component c : pnlMain.getComponents()) {
+      GameButton b = (GameButton) c;
+      b.setEnabled(false);
+    }
+  }
+
+  private boolean isBomb() {
+    Random r = new Random();
+    return r.nextInt(ROWS) == 1;
+  }
+
+  public static void main(String[] args) {
+    JFrame fr = new JFrame("MineSweeper");
+    fr.setLayout(new BorderLayout());
+    fr.add(new MineSweeper());
+    fr.setResizable(false);
+    fr.setSize(250, 350);
+    fr.setLocationRelativeTo(null);
+    fr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    fr.setVisible(true);
+  }
+
+  class GameButton extends JButton {
+    private boolean isBomb    = false;
+    private Point position = null;
+    private int     bombCount = 0;
+    private State state    = State.Initial;
+
+    public void setState(State state) {
+      this.state = state;
+      if (getBombCount() == 0 && !isBomb) {
+        setEnabled(false);
+      }
+    }
+
+    public State getState() {
+      return state;
+    }
+
+    public int getBombCount() {
+      return bombCount;
+    }
+
+    public void setBombCount(int bombCount) {
+      this.bombCount = bombCount;
+    }
+
+    public GameButton(Point position) {
+      setPosition(position);
+      setText(position.toString());
+    }
+
+    public Point getPosition() {
+      return position;
+    }
+
+    public void setPosition(Point position) {
+      this.position = position;
+    }
+
+    public boolean isBomb() {
+      return isBomb;
+    }
+
+    public void setBomb(boolean isBomb) {
+      this.isBomb = isBomb;
+    }
+
+    @Override
+    public String getText() {
+      if (state == State.Initial) {
+        return "";
+      }
+      if (state == State.Marked) {
+        return "\u00B6";
+      }
+      if (state == State.Clicked) {
+        if (isBomb) {
+          return "<html><font size='16'><b>*</b></font></html>";
+        } else {
+          if (getBombCount() > 0)
+            return getBombCount() + "";
+          else
+            return "";
+        }
+      }
+      if (state == State.WrongMarked) {
+        return "X";
+      }
+      return super.getText();
+    }
+
+    @Override
+    public Color getBackground() {
+      if (isColorCheatOn && isBomb) {
+        return Color.MAGENTA;
+      }
+      if (state == State.Clicked) {
+        if (isBomb) {
+          return Color.RED;
+        }
+        if (getBombCount() > 0) {
+          return Color.GREEN;
+        }
+      }
+      if (isEnabled()) {
+        return Color.YELLOW.brighter();
+      } else {
+        return super.getBackground();
+      }
+    }
+  }
+
+  private Point[] getSurroundings(Point cPoint) {
+    int cX = (int) cPoint.getX();
+    int cY = (int) cPoint.getY();
+    Point[] points = { new Point(cX - 1, cY - 1), new Point(cX - 1, cY), new Point(cX - 1, cY + 1), new Point(cX, cY - 1), new Point(cX, cY + 1),
+                       new Point(cX + 1, cY - 1), new Point(cX + 1, cY), new Point(cX + 1, cY + 1) };
+    return points;
+  }
+
+  private void updateBombCount(GameButton btn, Component[] components)
+  {
+    Point[] points = getSurroundings(btn.getPosition());
+
+    for (Point p : points) {
+      GameButton b = getButtonAt(components, p);
+      if (b != null && b.isBomb()) {
+        btn.setBombCount(btn.getBombCount() + 1);
+      }
+    }
+    btn.setText(btn.getBombCount() + "");
+  }
+
+  private GameButton getButtonAt(Component[] components, Point position) {
+    for (Component btn : components) {
+      if ((((GameButton) btn).getPosition().equals(position))) {
+        return (GameButton) btn;
+      }
+    }
+    return null;
+  }
+
+  public void eventDispatched(AWTEvent event) {
+    if (KeyEvent.class.isInstance(event) && ((KeyEvent) (event)).getID() == KeyEvent.KEY_RELEASED) {
+      if (((KeyEvent) (event)).getKeyCode() == KeyEvent.VK_F1) {
+        showAbout();
+      }
+      if (((KeyEvent) (event)).getKeyCode() == KeyEvent.VK_F2) {
+        restartGame();
+      }
+      if (((KeyEvent) (event)).getKeyCode() == KeyEvent.VK_F3) {
+        isColorCheatOn = !isColorCheatOn;
+        if (state == GameState.Playing) {
+          pnlMain.updateUI();
+        }
+      }
+
+      if (((KeyEvent) (event)).getKeyCode() == KeyEvent.VK_F12) {
+        for (Component c : pnlMain.getComponents()) {
+          GameButton b = (GameButton) c;
+          if (b.isBomb() == false) {
+            b.setState(State.Clicked);
+          } else {
+            b.setState(State.Marked);
+          }
+          b.setEnabled(false);
+        }
+        checkGameState();
+      }
+    }
+  }
+
+  public void actionPerformed(ActionEvent actionEvent) {
+    if (actionEvent.getSource() == btnReset) {
+      restartGame();
+    }
+  }
+}
 }
