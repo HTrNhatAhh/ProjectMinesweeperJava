@@ -22,7 +22,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-public class MineSweeper extends JPanel implements AWEventListener, ActionListener {
+public class MineSweeper extends JPanel implements AWTEventListener, ActionListener {
     public static enum State {
         Clicked, Marked, Initial, WrongMarked
     }
@@ -63,7 +63,7 @@ public class MineSweeper extends JPanel implements AWEventListener, ActionListen
         add(pnlMain, BorderLayout.CENTER);
         createButtons();
         addControlPanel();
-        Toolkit.getDefaultToolkit().addAWEventListener(this, AWEvent.KEY_EVENT_MASK);
+        Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.KEY_EVENT_MASK);
     }
 
     private void showAbout(){
@@ -153,17 +153,47 @@ public class MineSweeper extends JPanel implements AWEventListener, ActionListen
                 lstBombsLocation.add(location);
             }
         }
-        btn.addMouseListener(new MouseAdapter()){
+        btn.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent mouseEvent){
-                if (state != GameState.Playing){
+            public void mouseClicked(MouseEvent mouseEvent) {
+                if (state != GameState.Playing) {
                     state = GameState.Playing;
                     startThread();
                 }
-                if(((GameButton) mouseEvent.getSource()).isEnabled() == false){
+                if (((GameButton) mouseEvent.getSource()).isEnabled() == false) {
                     return;
                 }
+                if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
+                    if (((GameButton) mouseEvent.getSource()).getState() == State.Marked) {
+                        ((GameButton) mouseEvent.getSource()).setState(State.Initial);
+                        lblBombCount.setText((Long.parseLong(lblBombCount.getText()) + 1) + "");
+                        ((GameButton) mouseEvent.getSource()).updateUI();
+                        return;
+                    }
+                    ((GameButton) mouseEvent.getSource()).setState(State.Clicked);
+                    if (((GameButton) mouseEvent.getSource()).isBomb()) {
+                        blastBombs();
+                        return;
+                    } else {
+                        if (((GameButton) mouseEvent.getSource()).isBombCount() == 0) {
+                            updateSurroundingZeros(((GameButton) mouseEvent.getSource()).getPosition());
+                        }
+                    }
+                    if (!checkGameState()) {
+                        ((GameButton) mouseEvent.getSource()).setEnabled(false);
+                    }
+                } else if (mouseEvent.getButton() == MouseEvent.BUTTON3) {
+                    if (((GameButton) mouseEvent.getSource()).getState() == State.Marked) {
+                        ((GameButton) mouseEvent.getSource()).setState(State.Initial);
+                        lblBombCount.setText((Long.parseLong(lblBombCount.getText()) + 1) + "");
+                    } else {
+                        ((GameButton) mouseEvent.getSource()).setState(State.Marked);
+                        lblBombCount.setText((Long.parseLong(lblBombCount.getText()) - 1) + "");
+                    }
+                }
+                ((GameButton) mouseEvent.getSource()).updateUI();
             }
-        }
+        });
+        return btn;
     }
 }
